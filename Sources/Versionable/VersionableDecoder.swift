@@ -1,17 +1,7 @@
 import Foundation
 
 public final class VersionableDecoder {
-    private var migrations = [String: [(version: Versionable.Version, migration: (inout [String: Any]) -> Void)]]()
-
     public init() {
-    }
-
-    public func registerMigration<T>(to version: Versionable.Version, forType type: T.Type, migration: @escaping (inout [String: Any]) -> Void) where T: Versionable {
-        let name = "\(type)"
-        var versions = migrations[name] ?? []
-        versions.append((version, migration))
-        versions = versions.sorted { $0.version < $1.version }
-        migrations[name] = versions
     }
 
     public func decode<T>(_ data: Data, type: T.Type) throws -> T where T: Versionable {
@@ -24,11 +14,18 @@ public final class VersionableDecoder {
 
         var payload = try require(try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any])
 
-        migrations["\(type)"]?
-            .filter { serializedVersion.version < $0.version }
+#if DEBUG
+        let originalList = type.migrations
+        let sorted = type.migrations.sorted(by: { $0.to < $1.to })
+        assert(originalList.map { $0.to } == sorted.map { $0.to }, "\(type) migrations should be sorted by version")
+#endif
+
+        type
+            .migrations
+            .filter { serializedVersion.version < $0.to }
             .forEach {
                 $0.migration(&payload)
-                payload["version"] = $0.version
+                payload["version"] = $0.to
             }
 
         let data = try JSONSerialization.data(withJSONObject: payload as Any, options: [])

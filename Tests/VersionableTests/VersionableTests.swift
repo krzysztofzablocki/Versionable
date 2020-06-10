@@ -3,6 +3,8 @@ import XCTest
 
 private struct TestModel: Versionable {
     static var version: Version = 1
+    static var migrations = [Migration]()
+
     var someData: String
     var version: Version
 }

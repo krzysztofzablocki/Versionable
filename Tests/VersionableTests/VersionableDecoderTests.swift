@@ -3,14 +3,23 @@ import Versionable
 
 private struct Simple: Versionable {
     static let version: Version = 1
+    static var migrations = [Migration]()
 
     let text: String
     var version: Version
 }
 
 private struct Complex: Versionable {
-
     static let version: Version = 3
+    static var migrations = [
+        Migration(to: 2, migration: { payload in
+            payload["text"] = "defaultText"
+        }),
+        Migration(to: 3, migration: { payload in
+            payload["number"] = (payload["text"] as? String) == "defaultText" ? 1 : 200
+        }),
+    ]
+
 
     let text: String
     let number: Int
@@ -23,12 +32,6 @@ final class VersionableDecoderTests: XCTestCase {
     override func setUp() {
         super.setUp()
         sut = VersionableDecoder()
-        sut?.registerMigration(to: 2, forType: Complex.self, migration: { payload in
-            payload["text"] = "defaultText"
-        })
-        sut?.registerMigration(to: 3, forType: Complex.self, migration: { payload in
-            payload["number"] = (payload["text"] as? String) == "defaultText" ? 1 : 200
-        })
     }
 
     override func tearDown() {
