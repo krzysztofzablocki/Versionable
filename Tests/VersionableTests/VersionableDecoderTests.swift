@@ -6,12 +6,12 @@ private struct Simple: Versionable {
     static var migrations = [Migration]()
 
     let text: String
-    var version: Version
+    let version: Version = Self.version
 }
 
 private struct Complex: Versionable {
     static let version: Version = 3
-    static var migrations = [
+    static let migrations = [
         Migration(to: 2, migration: { payload in
             payload["text"] = "defaultText"
         }),
@@ -45,7 +45,7 @@ final class VersionableDecoderTests: XCTestCase {
             "text": "payloadText",
         ])
 
-        let foo = try! sut?.decode(data, type: Simple.self)
+        let foo = try! sut?.decode(Simple.self, from: data)
 
         XCTAssertEqual(foo?.text, "payloadText")
     }
@@ -56,11 +56,11 @@ final class VersionableDecoderTests: XCTestCase {
             "wrong": "payloadText",
         ])
 
-        XCTAssertThrowsError(try sut?.decode(data, type: Simple.self))
+        XCTAssertThrowsError(try sut?.decode(Simple.self, from: data))
     }
 
     func testDecodingAutomaticallyMigratesWhenNeeded() {
-        let complex = try! sut?.decode(encode(["version": 1]), type: Complex.self)
+        let complex = try! sut?.decode(Complex.self, from: encode(["version": 1]))
 
         XCTAssertEqual(complex?.version, Complex.version)
         XCTAssertEqual(complex?.text, "defaultText")
@@ -75,7 +75,7 @@ final class VersionableDecoderTests: XCTestCase {
 
         measure {
             for _ in 0...1_000 {
-                _ = try! sut?.decode(data, type: Simple.self)
+                _ = try! sut?.decode(Simple.self, from: data)
             }
         }
     }
@@ -87,7 +87,7 @@ final class VersionableDecoderTests: XCTestCase {
 
         measure {
             for _ in 0...1_000 {
-                _ = try! sut?.decode(data, type: Complex.self)
+                _ = try! sut?.decode(Complex.self, from: data)
             }
         }
     }

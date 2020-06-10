@@ -6,7 +6,7 @@ private struct TestModel: Versionable {
     static var migrations = [Migration]()
 
     var someData: String
-    var version: Version
+    var version: Version = Self.version
 }
 
 final class VersionableTests: XCTestCase {

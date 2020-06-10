@@ -4,8 +4,7 @@ public final class VersionableDecoder {
     public init() {
     }
 
-    public func decode<T>(_ data: Data, type: T.Type) throws -> T where T: Versionable {
-        let decoder = JSONDecoder()
+    public func decode<T>(_ type: T.Type, from data: Data, usingDecoder decoder: JSONDecoder = .init()) throws -> T where T: Versionable {
         let serializedVersion = try decoder.decode(VersionContainer.self, from: data)
 
         if serializedVersion.version == type.version {
