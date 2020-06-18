@@ -67,27 +67,56 @@ final class VersionableDecoderTests: XCTestCase {
         XCTAssertEqual(complex?.number, 1)
     }
 
-    func testPerformanceOfHappyPath() {
+    func testPerformanceOfHappyPathUsingNaiveDecoding() {
         let data = encode([
             "version": 1,
             "text": "payloadText",
         ])
 
+        let decoder = JSONDecoder()
         measure {
-            for _ in 0...1_000 {
-                _ = try! sut?.decode(Simple.self, from: data)
+            for _ in 0...10_000 {
+                _ = try! sut?.decode(Simple.self, from: data, usingDecoder: .data(decoder))
             }
         }
     }
 
-    func testPerformanceOfMigrationPath() {
+    func testPerformanceOfMigrationPathUsingNaiveDecoding() {
         let data = encode([
             "version": 1,
         ])
 
+        let decoder = JSONDecoder()
         measure {
-            for _ in 0...1_000 {
-                _ = try! sut?.decode(Complex.self, from: data)
+            for _ in 0...10_000 {
+                _ = try! sut?.decode(Complex.self, from: data, usingDecoder: .data(decoder))
+            }
+        }
+    }
+
+    func testPerformanceOfHappyPathUsingDictionaryDecoding() {
+        let data = encode([
+            "version": 1,
+            "text": "payloadText",
+        ])
+
+        let decoder = DictionaryDecoder()
+        measure {
+            for _ in 0...10_000 {
+                _ = try! sut?.decode(Simple.self, from: data, usingDecoder: .dictionary(decoder))
+            }
+        }
+    }
+
+    func testPerformanceOfMigrationPathUsingDictionaryDecoding() {
+        let data = encode([
+            "version": 1,
+        ])
+
+        let decoder = DictionaryDecoder()
+        measure {
+            for _ in 0...10_000 {
+                _ = try! sut?.decode(Complex.self, from: data, usingDecoder: .dictionary(decoder))
             }
         }
     }
