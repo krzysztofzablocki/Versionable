@@ -5,7 +5,7 @@ public final class VersionableDecoder {
     }
 
     public func decode<T>(_ type: T.Type, from data: Data, usingDecoder decoder: JSONDecoder = .init()) throws -> T where T: Versionable {
-        let serializedVersion = try decoder.decode(VersionContainer.self, from: data)
+        let serializedVersion = try decoder.decode(VersionContainer<T.Version>.self, from: data)
 
         if serializedVersion.version == type.version {
             return try decoder.decode(T.self, from: data)
@@ -13,18 +13,19 @@ public final class VersionableDecoder {
 
         var payload = try require(try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any])
 
-#if DEBUG
-        let originalList = type.migrations
-        let sorted = type.migrations.sorted(by: { $0.to < $1.to })
-        assert(originalList.map { $0.to } == sorted.map { $0.to }, "\(type) migrations should be sorted by version")
-#endif
+        #if DEBUG
+        let originalList = type.Version.allCases
+        let sorted = originalList.sorted(by: { $0 < $1 })
+        assert(originalList.map { $0 } == sorted.map { $0 }, "\(type) Versions should be sorted by their comparable order")
+        #endif
 
         type
-            .migrations
-            .filter { serializedVersion.version < $0.to }
+            .Version
+            .allCases
+            .filter { serializedVersion.version < $0 }
             .forEach {
-                $0.migration(&payload)
-                payload["version"] = $0.to
+                type.migrate(to: $0)(&payload)
+                payload["version"] = $0.rawValue
             }
 
         let data = try JSONSerialization.data(withJSONObject: payload as Any, options: [])
