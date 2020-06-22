@@ -1,6 +1,22 @@
 import XCTest
 @testable import Versionable
 
+public extension Versionable {
+    static func testMigrationPaths() throws {
+        let files = try FileManager.default.contentsOfDirectory(atPath: mockDirectoryPath)
+
+        let decoder = VersionableDecoder()
+        files.forEach { mock in
+            do {
+                _ = try decoder.decode(self, from: Data(contentsOf: URL(fileURLWithPath: "\(mockDirectoryPath)/\(mock)")))
+            }
+            catch {
+                XCTFail("Unable to migrate from version \((mock as NSString).lastPathComponent), error \(error)")
+            }
+        }
+    }
+}
+
 private struct TestModel {
     var someData: String
     var version: Version = Self.version
@@ -16,6 +32,10 @@ extension TestModel: Versionable {
         case .v1:
             return .none
         }
+    }
+
+    static var mock: TestModel {
+        .init(someData: "mock")
     }
 }
 

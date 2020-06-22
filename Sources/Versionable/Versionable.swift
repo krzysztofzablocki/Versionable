@@ -1,3 +1,5 @@
+import Foundation
+
 public protocol VersionType: CaseIterable, Codable, Comparable, RawRepresentable {}
 
 public extension VersionType where RawValue: Comparable {
@@ -15,6 +17,8 @@ public protocol Versionable: Codable {
 
     /// Persisted Version of this type
     var version: Version { get }
+
+    static var mock: Self { get }
 }
 
 public extension Versionable {
@@ -40,4 +44,31 @@ public enum Migration {
 
 struct VersionContainer<Version: VersionType>: Codable {
     var version: Version
+}
+
+public extension Versionable {
+    static var mockDirectoryRootPath: String {
+        func simulatorOwnerUsername() -> String {
+            //! running on simulator so just grab the name from home dir /Users/{username}/Library...
+            let usernameComponents = NSHomeDirectory().components(separatedBy: "/")
+            guard usernameComponents.count > 2 else { fatalError() }
+            return usernameComponents[2]
+        }
+        return "/Users/\(simulatorOwnerUsername())/Desktop"
+    }
+
+    static var mockDirectoryPath: String {
+        return "\(mockDirectoryRootPath)/\(self)/"
+    }
+
+    #if targetEnvironment(simulator)
+    static func saveMockToFile() throws {
+        let encoded = try JSONEncoder().encode(mock)
+        if !FileManager.default.fileExists(atPath: mockDirectoryPath) {
+            try FileManager.default.createDirectory(atPath: mockDirectoryPath, withIntermediateDirectories: true, attributes: nil)
+        }
+
+        try encoded.write(to: URL(fileURLWithPath: "\(mockDirectoryPath)/\(version).json"), options: .atomicWrite)
+    }
+    #endif
 }

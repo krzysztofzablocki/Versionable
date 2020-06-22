@@ -17,6 +17,10 @@ extension Simple: Versionable {
             return .none
         }
     }
+
+    static var mock: Simple {
+        .init(text: "mock")
+    }
 }
 
 
@@ -46,6 +50,10 @@ extension Complex: Versionable {
                 payload["number"] = (payload["text"] as? String) == "defaultText" ? 1 : 200
             }
         }
+    }
+
+    static var mock: Complex {
+        .init(text: "mock", number: 0)
     }
 }
 
